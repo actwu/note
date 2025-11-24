@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" style="color-scheme:dark">
+<head>
+<meta charset="UTF-8">
+<title>Note Editor</title>
+<style>
+* {border:none; margin:0; outline:none;}
+:root {background:#14141C; color:#FAFAFF;}
+body {display:flex; flex-direction:column; padding:20px; gap:12px; font-family:Helvetica; font-size:18px; max-width:899px; margin:auto;}
+textarea {flex:1; background:#24242C; color:#FAFAFF; padding:10px; font-size:16px; resize:vertical; min-height:75svh;}
+button {background:#14141C; color:#FAFAFF; padding:10px; cursor:pointer; flex:1;}
+</style>
+</head>
+<body>
+
+<button onclick="location.href='index.html'">Back</button>
+<textarea id="note"></textarea>
+
+<script>
+const noteEl = document.getElementById('note');
+const path = location.pathname.split('/').pop();
+const nodeKey = 'node_' + path;
+const storageKey = 'node_page_' + path;
+const chunkSize = 1200;
+
+let chunks = [];
+
+// Load existing note
+function loadNote() {
+    const saved = localStorage.getItem(nodeKey);
+    if(saved){
+        const data = JSON.parse(saved);
+        chunks = data.chunks || [];
+        noteEl.value = chunks.join('');
+    }
+}
+
+// Save note content in chunks
+function saveNote() {
+    const value = noteEl.value;
+    chunks = [];
+    for(let i=0;i<value.length;i+=chunkSize){
+        chunks.push(value.slice(i,i+chunkSize));
+    }
+    localStorage.setItem(nodeKey, JSON.stringify({chunks, content:true}));
+
+    // Save metadata for index.html
+    const date = new Date();
+    localStorage.setItem(storageKey, JSON.stringify({date: date.toISOString(), path: path}));
+}
+
+noteEl.oninput = saveNote;
+loadNote();
+</script>
+
+</body>
+</html>

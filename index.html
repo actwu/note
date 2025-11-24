@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" style="color-scheme:dark">
+<head>
+<meta charset="UTF-8">
+<title>Notes</title>
+<style>
+* {border:none; margin:0; outline:none;}
+:root {background:#000000; color:#FAFAFF;}
+body {display:flex; flex-direction:column; padding:20px; gap:12px; font-family:Helvetica; font-size:18px; max-width:899px; margin:auto;}
+button {background:#14141C; color:#FAFAFF; padding:10px; cursor:pointer; flex:1;}
+section {display:flex; flex-direction:column; gap:6px;}
+span {display:flex; flex-wrap:wrap; gap:6px;}
+.square {width:100px; height:100px; background:#14141C; display:flex; align-items:flex-end; justify-content:flex-start; padding:5px; cursor:pointer; color:#FAFAFF;}
+label.switch {position:relative; display:inline-block; width:50px; height:24px;}
+label.switch input {opacity:0; width:0; height:0;}
+.slider {position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#14141C; transition:.4s; border-radius:24px;}
+.slider:before {position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#FAFAFF; transition:.4s; border-radius:50%;}
+input:checked + .slider:before {transform:translateX(26px);}
+</style>
+</head>
+<body>
+
+<button id="newNote">+ New Note</button>
+<label class="switch">
+<input type="checkbox" id="viewSwitch">
+<span class="slider"></span>
+</label>
+
+<section id="projects"></section>
+
+<script>
+const projectsEl = document.getElementById('projects');
+const viewSwitch = document.getElementById('viewSwitch');
+const newNoteBtn = document.getElementById('newNote');
+
+// Function to generate a random path
+function generatePath() {
+    return 'note_' + Math.random().toString(36).substr(2, 8) + '.html';
+}
+
+// Open new note on click
+newNoteBtn.onclick = () => {
+    const path = generatePath();
+    // Save metadata immediately
+    const storageKey = 'node_page_' + path;
+    const date = new Date();
+    localStorage.setItem(storageKey, JSON.stringify({date: date.toISOString(), path: path}));
+    location.href = path;
+};
+
+// Load notes grouped by month or year
+function loadNotes() {
+    projectsEl.innerHTML = '';
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith('node_page_'));
+    const grouped = {};
+
+    keys.forEach(k=>{
+        const data = JSON.parse(localStorage.getItem(k));
+        const date = new Date(data.date);
+        const label = date.toLocaleDateString();
+        const groupKey = viewSwitch.checked ? date.getFullYear() : `${date.getMonth()+1}`;
+
+        if(!grouped[groupKey]) grouped[groupKey] = [];
+        grouped[groupKey].push({title: label, path: data.path});
+    });
+
+    for(const group in grouped){
+        const sec = document.createElement('section');
+        sec.insertAdjacentHTML('beforeend', `<strong>${group}</strong>`);
+        const span = document.createElement('span');
+
+        grouped[group].forEach(n=>{
+            const div = document.createElement('div');
+            div.className = 'square';
+            div.textContent = n.title;
+            div.onclick=()=>location.href=n.path;
+            span.appendChild(div);
+        });
+
+        sec.appendChild(span);
+        projectsEl.appendChild(sec);
+    }
+}
+
+viewSwitch.onchange = loadNotes;
+loadNotes();
+</script>
+
+</body>
+</html>
